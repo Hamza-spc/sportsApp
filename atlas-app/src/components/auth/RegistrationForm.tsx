@@ -25,21 +25,20 @@ const registrationSchema = z.object({
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
   dateOfBirth: z.string(),
   phoneNumber: z.string().optional(),
-  
   // Player specific fields
   favoriteSport: z.string().optional(),
   position: z.string().optional(),
-  
   // Special user specific fields
   specializations: z.array(z.string()).optional(),
   bio: z.string().optional(),
   experience: z.string().optional(),
-  
   // Venue hoster specific fields
   companyName: z.string().optional(),
-  
   // Terms and conditions
   acceptTerms: z.boolean().refine(val => val === true, 'You must accept the terms and conditions'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
 type RegistrationFormData = z.infer<typeof registrationSchema>;
@@ -51,7 +50,7 @@ interface RegistrationFormProps {
 
 const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, isLoading = false }) => {
   const [selectedUserType, setSelectedUserType] = useState<UserType>('player');
-  
+
   const {
     register,
     handleSubmit,
@@ -61,6 +60,9 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, isLoading
   } = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationSchema),
     mode: 'onChange',
+    defaultValues: {
+      userType: 'player',
+    },
   });
 
   const watchedUserType = watch('userType');
@@ -68,7 +70,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit, isLoading
   const handleUserTypeChange = (value: string) => {
     const userType = value as 'player' | 'special_user' | 'venue_hoster';
     setSelectedUserType(userType);
-    setValue('userType', userType);
+    setValue('userType', userType, { shouldValidate: true });
   };
 
   const handleFormSubmit = (data: RegistrationFormData) => {
